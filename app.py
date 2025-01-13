@@ -29,7 +29,7 @@ def task_to_run(url, userID):
         already_scraped = supabase_client.table("oglasi").select("avtonet_id").eq("user_id", userID).execute()
         scraper  = cloudscraper.create_scraper()
         headers = {
-            "User-Agent": "george agent",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
             "Accept-Language": "en-US,en;q=0.9",
             "Accept-Encoding": "gzip, deflate, br",
             "Accept": "gzip, deflate, br",
@@ -118,9 +118,7 @@ def task_to_run(url, userID):
             time.sleep(30 * 60)  # Sleep for 30 minutes
         else:
             print("GOERGE FLOYD - OXYGEN")
-            f = open("file.html", "w", encoding="utf-8")
-            f.write("GOERGE FLOYD - OXYGEN")
-            f.close()
+            time.sleep(2)
         
 
 @app.route("/add-scraper", methods=['GET'])
