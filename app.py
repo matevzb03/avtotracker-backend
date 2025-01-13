@@ -7,7 +7,9 @@ import os
 from urllib.parse import urlparse, parse_qs
 
 from supabase import Client, create_client
-
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import messaging
 import threading
 app = Flask(__name__)
 
@@ -20,14 +22,20 @@ supabase_client: Client = create_client("https://oyprygmqmtgdysbopzcn.supabase.c
 
 @app.route("/")
 def hello_world():
-    return "<p>Hello, George!</p>"
+    return "<p>Hello, EMP!</p>"
 
 # Function to run in a new thread every 30 minutes
-def task_to_run(url, userID):
+def task_to_run(url, userID, notificationToken):
+    cred = credentials.Certificate(".venv/fcm.json")
+    firebase_admin.initialize_app(cred)
+    
     while True:
         print("Task executed")
         already_scraped = supabase_client.table("oglasi").select("avtonet_id").eq("user_id", userID).execute()
         scraper  = cloudscraper.create_scraper()
+        proxy = {
+            'https': 'http://Z6LyjqVSnKVUncl-res-al:KHcnCdRYlAIf1WK@geo.beyondproxy.io:5959'
+        }
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
             "Accept-Language": "en-US,en;q=0.9",
@@ -36,7 +44,7 @@ def task_to_run(url, userID):
             'Referer': 'https://www.avto.net/',
             "Connection": "keep-alive",
         }
-        scraper.get("https://www.avto.net/", headers=headers)
+        scraper.get("https://www.avto.net/", headers=headers, proxies=proxy)
 
         cookies = scraper.cookies.items()
         cookie_str = ""
@@ -44,7 +52,7 @@ def task_to_run(url, userID):
             cookie_str += x[0]+"="+x[1]+";"
 
         new_headers = {
-            "User-Agent": "george from albania",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
             "Accept-Language": "en-US,en;q=0.9",
             "Accept-Encoding": "gzip, deflate, br",
             "Accept": "gzip, deflate, br",
@@ -52,7 +60,7 @@ def task_to_run(url, userID):
             "Connection": "keep-alive",
             "Cookie" : cookie_str
         }
-        resp = scraper.get(url,headers=headers)
+        resp = scraper.get(url,headers=headers, proxies=proxy)
         if resp.status_code == 200:
             soup = BeautifulSoup(resp.text, "html.parser")
             # Find all car result containers
@@ -96,13 +104,28 @@ def task_to_run(url, userID):
                     detail_id = query_params.get("id", ["N/A"])[0]  # Extract `id` from query params
                 
                 if(True):
-                    print("nigger")
                     print(car_price)
                     insert = (
                         supabase_client.table("oglasi")
                         .insert({"user_id": userID, "avtonet_id": int(detail_id), "name": car_name, "price":car_price, "photo_url":photo_url, "ad_url":detail_url})
                         .execute()
                     )
+                    registration_token = 'ctPqT0DPS4-SIV-iF9vt2k:APA91bHuk1h_1GtBk1gMteg7cO1w6oq-O1sQ4pu5arEYBSfjmFYIu7K-ZdqYt4o_MGz2opd6pb-6cbrpxLkSAnZLpVHhvBcv305bnwOn0vAySCvpGA_81jQ'
+                    # See documentation on defining a message payload.
+                    message = messaging.Message(
+                        notification=messaging.Notification(
+                            title='AVTOTRACKER - NOV OGLAS',
+                            body='Nov oglas je bil objavljen',
+                        ),
+                        token=notificationToken,
+                    )
+
+                    # Send a message to the device corresponding to the provided
+                    # registration token.
+                    response = messaging.send(message)
+                    # Response is a message ID string.
+                    print('Successfully sent message:', response)
+                    
 
                 # Print extracted information
                 print(f"Ad {idx}:")
@@ -117,13 +140,14 @@ def task_to_run(url, userID):
                 print("-" * 40)
             time.sleep(30 * 60)  # Sleep for 30 minutes
         else:
-            print("GOERGE FLOYD - OXYGEN")
-            time.sleep(30 * 60)
+            print("EMP - SAD")
+            
         
 
 @app.route("/add-scraper", methods=['GET'])
 def add_scraper():
     userID = request.args.get('userID')
+    notificationToken = request.args.get('notificationToken')
     znamka = request.args.get('znamka', '')
     model = request.args.get('model', '')
     cenaMin = request.args.get('cenaMin', '')
@@ -215,10 +239,10 @@ def add_scraper():
     # Generate the final URL with all parameters, including empty ones
     final_url = "https://www.avto.net/Ads/results.asp?" + urllib.parse.urlencode(params)
     print(final_url)
-    thread = threading.Thread(target=task_to_run, args=(final_url, userID), daemon=True)
+    thread = threading.Thread(target=task_to_run, args=(final_url, userID, notificationToken), daemon=True)
     thread.start()
     print("nnnnnnnnnn")
-    return "<p>Hello, requester george!</p>"
+    return "<p>Hello, requester EMP!</p>"
 
 if __name__ == '__main___':
     app.run()
