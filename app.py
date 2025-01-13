@@ -215,9 +215,10 @@ def add_scraper():
     # Generate the final URL with all parameters, including empty ones
     final_url = "https://www.avto.net/Ads/results.asp?" + urllib.parse.urlencode(params)
     print(final_url)
-    thread = threading.Thread(target=task_to_run(final_url, userID), daemon=True)
+    thread = threading.Thread(target=task_to_run, args=(final_url, userID), daemon=True)
     thread.start()
-    return "Task started!", 200
+    print("nnnnnnnnnn")
+    return "<p>Hello, requester george!</p>"
 
 if __name__ == '__main___':
     app.run()
