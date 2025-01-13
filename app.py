@@ -221,5 +221,5 @@ def add_scraper():
     thread.start()
     return "Task started!", 200
 
-if __name__ == 'main':
+if __name__ == '__main___':
     app.run()
