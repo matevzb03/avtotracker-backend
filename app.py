@@ -118,7 +118,7 @@ def task_to_run(url, userID):
             time.sleep(30 * 60)  # Sleep for 30 minutes
         else:
             print("GOERGE FLOYD - OXYGEN")
-            time.sleep(2)
+            time.sleep(30 * 60)
         
 
 @app.route("/add-scraper", methods=['GET'])
