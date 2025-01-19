@@ -18,7 +18,8 @@ app = Flask(__name__)
 #db.init_app(app)
 
 supabase_client: Client = create_client("https://oyprygmqmtgdysbopzcn.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95cHJ5Z21xbXRnZHlzYm9wemNuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNjYwOTYwOSwiZXhwIjoyMDUyMTg1NjA5fQ.q03eizLiEQykh30rXWoBFKViJ1UjM_FHJv51iAUdlEw")
-
+cred = credentials.Certificate("fcm.json")
+firebase_admin.initialize_app(cred)
 
 @app.route("/")
 def hello_world():
@@ -26,8 +27,7 @@ def hello_world():
 
 # Function to run in a new thread every 30 minutes
 def task_to_run(url, userID, notificationToken):
-    cred = credentials.Certificate(".venv/fcm.json")
-    firebase_admin.initialize_app(cred)
+    
     
     while True:
         print("Task executed")
@@ -102,12 +102,25 @@ def task_to_run(url, userID, notificationToken):
                     parsed_url = urlparse(detail_url)
                     query_params = parse_qs(parsed_url.query)
                     detail_id = query_params.get("id", ["N/A"])[0]  # Extract `id` from query params
+                letnik = ""
+                kilometri = ""
+                tip_goriva = ""
+                menjalnik = ""
+                prostornina_motorja = ""
+                try:
+                    letnik = table_values[0]
+                    kilometri = table_values[1]
+                    tip_goriva = table_values[2]
+                    menjalnik = table_values[3]
+                    prostornina_motorja = table_values[4]
+                except:
+                    pass
                 
                 if(True):
                     print(car_price)
                     insert = (
                         supabase_client.table("oglasi")
-                        .insert({"user_id": userID, "avtonet_id": int(detail_id), "name": car_name, "price":car_price, "photo_url":photo_url, "ad_url":detail_url})
+                        .insert({"user_id": userID, "avtonet_id": int(detail_id), "name": car_name, "price":car_price, "letnik":letnik, "motor":tip_goriva, "menjalnik": menjalnik, "moc_motorja":prostornina_motorja, "photo_url":photo_url, "ad_url":detail_url})
                         .execute()
                     )
                     registration_token = 'ctPqT0DPS4-SIV-iF9vt2k:APA91bHuk1h_1GtBk1gMteg7cO1w6oq-O1sQ4pu5arEYBSfjmFYIu7K-ZdqYt4o_MGz2opd6pb-6cbrpxLkSAnZLpVHhvBcv305bnwOn0vAySCvpGA_81jQ'
@@ -122,9 +135,9 @@ def task_to_run(url, userID, notificationToken):
 
                     # Send a message to the device corresponding to the provided
                     # registration token.
-                    response = messaging.send(message)
+                        #response = messaging.send(message)
                     # Response is a message ID string.
-                    print('Successfully sent message:', response)
+                        #print('Successfully sent message:', response)
                     
 
                 # Print extracted information
