@@ -27,8 +27,14 @@ def hello_world():
     print(already_scraped)
     return "<p>Hello, EMP!</p>"
 
+@app.route("/delete-tracker", methods=['GET'])
+def delete_tracker():
+    trackerID = request.args.get('trackerID')
+    response = supabase_client.table('oglasi').delete().eq('trackerID', trackerID).execute()
+    return "<p>DELETE, EMP!</p>"
+
 # Function to run in a new thread every 30 minutes
-def task_to_run(url, userID, notificationToken):
+def task_to_run(url, userID, notificationToken, trackerID):
     
     
     while True:
@@ -125,7 +131,7 @@ def task_to_run(url, userID, notificationToken):
 
                         insert = (
                             supabase_client.table("oglasi")
-                            .insert({"user_id": userID, "avtonet_id": int(detail_id), "name": car_name, "price":car_price, "letnik":letnik, "motor":tip_goriva, "menjalnik": menjalnik, "moc_motorja":prostornina_motorja, "photo_url":photo_url, "ad_url":detail_url})
+                            .insert({"user_id": userID, "avtonet_id": int(detail_id), "trackerID":trackerID, "name": car_name, "price":car_price, "letnik":letnik, "motor":tip_goriva, "menjalnik": menjalnik, "moc_motorja":prostornina_motorja, "photo_url":photo_url, "ad_url":detail_url})
                             .execute()
                         )
                         # Print extracted information
@@ -170,6 +176,7 @@ def task_to_run(url, userID, notificationToken):
 @app.route("/add-scraper", methods=['GET'])
 def add_scraper():
     userID = request.args.get('userID')
+    trackerID = request.args.get('trackerID')
     notificationToken = request.args.get('notificationToken')
     znamka = request.args.get('znamka', '')
     model = request.args.get('model', '')
