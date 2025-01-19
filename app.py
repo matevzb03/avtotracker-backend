@@ -23,6 +23,8 @@ firebase_admin.initialize_app(cred)
 
 @app.route("/")
 def hello_world():
+    already_scraped = supabase_client.table("oglasi").select("avtonet_id").or_("and(user_id.eq.188c689c-3a02-4115-9dc1-08a37c48f6c6,avtonet_id.eq.20472272)").execute()
+    print(already_scraped)
     return "<p>Hello, EMP!</p>"
 
 # Function to run in a new thread every 30 minutes
@@ -31,7 +33,6 @@ def task_to_run(url, userID, notificationToken):
     
     while True:
         print("Task executed")
-        already_scraped = supabase_client.table("oglasi").select("avtonet_id").eq("user_id", userID).execute()
         scraper  = cloudscraper.create_scraper()
         proxy = {
             'https': 'http://Z6LyjqVSnKVUncl-res-al:KHcnCdRYlAIf1WK@geo.beyondproxy.io:5959'
@@ -118,20 +119,39 @@ def task_to_run(url, userID, notificationToken):
                 
                 if(True):
                     print(car_price)
-                    insert = (
-                        supabase_client.table("oglasi")
-                        .insert({"user_id": userID, "avtonet_id": int(detail_id), "name": car_name, "price":car_price, "letnik":letnik, "motor":tip_goriva, "menjalnik": menjalnik, "moc_motorja":prostornina_motorja, "photo_url":photo_url, "ad_url":detail_url})
-                        .execute()
-                    )
-                    registration_token = 'ctPqT0DPS4-SIV-iF9vt2k:APA91bHuk1h_1GtBk1gMteg7cO1w6oq-O1sQ4pu5arEYBSfjmFYIu7K-ZdqYt4o_MGz2opd6pb-6cbrpxLkSAnZLpVHhvBcv305bnwOn0vAySCvpGA_81jQ'
-                    # See documentation on defining a message payload.
-                    message = messaging.Message(
-                        notification=messaging.Notification(
-                            title='AVTOTRACKER - NOV OGLAS',
-                            body='Nov oglas je bil objavljen',
-                        ),
-                        token=notificationToken,
-                    )
+                    already_scraped = supabase_client.table("oglasi").select("avtonet_id").or_("and(user_id.eq."+userID+",avtonet_id.eq."+detail_id+")").execute()
+                    print(already_scraped)
+                    if(len(already_scraped.data)) == 0:
+
+                        insert = (
+                            supabase_client.table("oglasi")
+                            .insert({"user_id": userID, "avtonet_id": int(detail_id), "name": car_name, "price":car_price, "letnik":letnik, "motor":tip_goriva, "menjalnik": menjalnik, "moc_motorja":prostornina_motorja, "photo_url":photo_url, "ad_url":detail_url})
+                            .execute()
+                        )
+                        # Print extracted information
+                        print(f"Ad {idx}:")
+                        print(f"Name: {car_name}")
+                        print(f"Price: {car_price}")
+                        print("Details:")
+                        for value in table_values:
+                            print(f"  {value}")
+                        print(f"Photo URL: {photo_url}")
+                        print(f"Details URL: {detail_url}")
+                        print(f"Ad ID: {detail_id}")
+                        print("-" * 40)
+                        registration_token = 'ctPqT0DPS4-SIV-iF9vt2k:APA91bHuk1h_1GtBk1gMteg7cO1w6oq-O1sQ4pu5arEYBSfjmFYIu7K-ZdqYt4o_MGz2opd6pb-6cbrpxLkSAnZLpVHhvBcv305bnwOn0vAySCvpGA_81jQ'
+                        # See documentation on defining a message payload.
+                        message = messaging.Message(
+                            notification=messaging.Notification(
+                                title='AVTOTRACKER - NOV OGLAS',
+                                body='Nov oglas je bil objavljen',
+                            ),
+                            token=notificationToken,
+                        )
+                        #response = messaging.send(message)
+                        #print('Successfully sent message:', response)
+                    else:
+                        print("AVTO ŽE V BAZI")
 
                     # Send a message to the device corresponding to the provided
                     # registration token.
@@ -140,17 +160,7 @@ def task_to_run(url, userID, notificationToken):
                         #print('Successfully sent message:', response)
                     
 
-                # Print extracted information
-                print(f"Ad {idx}:")
-                print(f"Name: {car_name}")
-                print(f"Price: {car_price}")
-                print("Details:")
-                for value in table_values:
-                    print(f"  {value}")
-                print(f"Photo URL: {photo_url}")
-                print(f"Details URL: {detail_url}")
-                print(f"Ad ID: {detail_id}")
-                print("-" * 40)
+                
             time.sleep(30 * 60)  # Sleep for 30 minutes
         else:
             print("EMP - SAD")
