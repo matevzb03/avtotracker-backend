@@ -23,11 +23,7 @@ firebase_admin.initialize_app(cred)
 
 @app.route("/")
 def hello_world():
-    supabase_client.channel('oglasi').on_postgres_changes("*", schema="public", table="oglasi", callback=updated).subscribe()
     return "<p>Hello, EMP!</p>"
-
-def updated():
-    print("DATABASE GOT UPDATED")
 
 @app.route("/delete-tracker", methods=['GET'])
 def delete_tracker():
@@ -40,6 +36,10 @@ def task_to_run(url, userID, notificationToken, trackerID):
     
     
     while True:
+        tracker_checker = supabase_client.table("Trackers").select("id").eq("id", trackerID).execute()
+        print(tracker_checker)
+        if(len(tracker_checker.data)) == 0:
+            break
         print("Task executed")
         scraper  = cloudscraper.create_scraper()
         proxy = {
@@ -169,7 +169,7 @@ def task_to_run(url, userID, notificationToken, trackerID):
                     
 
                 
-            time.sleep(30 * 60)  # Sleep for 30 minutes
+            time.sleep(30 * 60)  #Sleep for 30 minutes
         else:
             print("EMP - SAD")
             
