@@ -23,9 +23,11 @@ firebase_admin.initialize_app(cred)
 
 @app.route("/")
 def hello_world():
-    already_scraped = supabase_client.table("oglasi").select("avtonet_id").or_("and(user_id.eq.188c689c-3a02-4115-9dc1-08a37c48f6c6,avtonet_id.eq.20472272)").execute()
-    print(already_scraped)
+    supabase_client.channel('oglasi').on_postgres_changes("*", schema="public", table="oglasi", callback=updated).subscribe()
     return "<p>Hello, EMP!</p>"
+
+def updated():
+    print("DATABASE GOT UPDATED")
 
 @app.route("/delete-tracker", methods=['GET'])
 def delete_tracker():
@@ -131,7 +133,7 @@ def task_to_run(url, userID, notificationToken, trackerID):
 
                         insert = (
                             supabase_client.table("oglasi")
-                            .insert({"user_id": userID, "avtonet_id": int(detail_id), "trackerID":trackerID, "name": car_name, "price":car_price, "letnik":letnik, "motor":tip_goriva, "menjalnik": menjalnik, "moc_motorja":prostornina_motorja, "photo_url":photo_url, "ad_url":detail_url})
+                            .insert({"user_id": userID, "avtonet_id": int(detail_id), "trackerID":trackerID, "notificationID": notificationToken, "name": car_name, "price":car_price, "letnik":letnik, "motor":tip_goriva, "menjalnik": menjalnik, "moc_motorja":prostornina_motorja, "photo_url":photo_url, "ad_url":detail_url})
                             .execute()
                         )
                         # Print extracted information
@@ -154,8 +156,8 @@ def task_to_run(url, userID, notificationToken, trackerID):
                             ),
                             token=notificationToken,
                         )
-                        #response = messaging.send(message)
-                        #print('Successfully sent message:', response)
+                        response = messaging.send(message)
+                        print('Successfully sent message:', response)
                     else:
                         print("AVTO ŽE V BAZI")
 
